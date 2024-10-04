@@ -1,0 +1,233 @@
+---
+title: "Homework One    DATA607: Communication in Data Science"
+author: "Farhad Abasahl - UID: 113959479"
+date: "2024-09-04"
+output: pdf_document
+---
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Effectiveness vs Uneffectiveness
+
+In this homework we are revewing some samples of effectivness vs ineffectiveness of both graphic demonstration:
+
+## Effective Visualizations Samples:
+
+## A.    COVID-19 Heatmap of Potential Spread
+
+      Description:    This heatmap visualizes the potential spread of COVID-19 by tracking phone data collected during         spring break in Florida. Each red node represents a phone's location, with the spread shown geographically.
+Source:         CareerFoundry​(CareerFoundry)
+
+
+
+R Code: 
+```{r , echo=TRUE}
+# Set CRAN mirror
+options(repos = c(CRAN = "https://cran.r-project.org"))
+
+# Now try installing the package again
+install.packages("sf")
+
+library(sf)
+```
+
+```{r , echo=TRUE}
+install.packages("osmdata")
+library(osmdata)
+```
+```{r , echo=TRUE}
+
+library(ggplot2)
+```
+
+```{r , echo=TRUE}
+# Define the location (Fort Lauderdale)
+fort_lauderdale <- getbb("Fort Lauderdale, Florida")
+
+# Retrieve the OSM map
+map <- opq(bbox = fort_lauderdale) %>%
+  add_osm_feature(key = "highway") %>%
+  osmdata_sf()
+
+# Plot the map
+ggplot() +
+  geom_sf(data = map$osm_lines, color = "black", size = 0.5) +
+  coord_sf() +
+  ggtitle("OSM Map of Fort Lauderdale")
+
+```
+### The Effectiveness for the follwoing categories are recognized:
+
+1.    Visualizing Geographic Context
+2.    Highlighting Tourism and Urban Features
+3.    Mapping Demographic and Economic Data
+4.    Flood and Environmental Risk Visualization
+5.    Traffic and Infrastructure Mapping
+6.    Land Use and Zoning Visualization
+7.    Climate and Weather Data Integration
+8.    Public Health and Social Services
+9.    Tourist Flow and Economic Impact Mapping
+10.   Real Estate and Housing Market Insights
+
+
+
+##B.    US Income Inequality
+
+      Description:    A well-designed graph showing income inequality over time, often using a series of histograms or         line charts.
+
+Source:         FlowingData Website
+
+R Code Example: To replicate a similar histogram or line chart:
+
+```{r , echo=TRUE}
+# Load necessary libraries
+library(ggplot2)
+
+# Example dataset (replace with actual income inequality data)
+data <- data.frame(
+  year = rep(2000:2020, each = 4),
+  income_group = factor(rep(c("Low", "Middle", "High", "Very High"), 21)),
+  percentage = runif(84, 10, 40)
+)
+
+# Create the plot
+ggplot(data, aes(x = year, y = percentage, color = income_group)) +
+  geom_line() +
+  labs(title = "Income Inequality Over Time",
+       x = "Year",
+       y = "Percentage of Income Group") +
+  theme_minimal()
+```
+
+## The Effectiveness for the following categories could be regarded:
+
+1.    Clarity: The code is well-commented and easy to understand.
+2.    Library Usage: Effectively uses ggplot2, a standard for data visualization in R.
+3.    Data: Uses a sample dataset (runif generates random data). 
+4.    Plot Type: geom_line() is appropriate for visualizing trends over time.
+5.    Aesthetics: Color is used to differentiate between income_group categories.theme_minimal() improves the plot’s         appearance, removing unnecessary grid lines and decorations.
+6.    Potential Improvements:   Replace the randomly generated data with real data. Add more customization for better        clarity in complex datasets.
+
+
+
+#   Ineffective Visualizations Samples:
+
+## C.    US Income Inequality
+
+      Description:    The "Population Density by State" plot visualizes the population density across different U.S. states. Using a color-coded map or bar chart, each state is represented according to its population density (people per square mile or kilometer). The darker shades represent states with higher population densities, while lighter shades indicate less densely populated areas. This allows for a clear comparison between highly urbanized states and more rural ones.
+
+Source:   Data for this plot is typically sourced from the U.S. Census Bureau, which provides official population and geographical data for all states. You can access state population density data via the U.S. Census Bureau's website.
+
+
+R Code:
+
+```{r , echo=TRUE}
+install.packages("ggplot2")
+```
+
+
+
+```{r , echo=TRUE}
+# Install maps package
+library(ggplot2)
+library(maps)
+```
+
+```{r , echo=TRUE}
+# Load US state map data
+states <- map_data("state")
+```
+
+
+```{r , echo=TRUE}
+
+# Create a mock dataset for population density
+population_data <- data.frame(
+  region = unique(states$region),
+  density = runif(length(unique(states$region)), min = 10, max = 1000)
+)
+
+# Merge population data with state map data
+states <- merge(states, population_data, by = "region")
+
+# Plot the US map with mock population density
+ggplot(states, aes(long, lat, group = group, fill = density)) +
+  geom_polygon(color = "white") +
+  coord_fixed(1.3) +
+  scale_fill_viridis_c() +
+  ggtitle("Population Density by State (Mock Data)")
+
+```
+ 
+
+## Ineffectiveness of this map could be categorized as the follows: 
+ 
+ 1.   Distorted geography: No default projection can mislead viewers about region sizes.
+ 2.   Simplified boundaries: Loss of geographic detail reduces map accuracy.
+ 3.   Limited spatial analysis: Manual data integration without advanced spatial functions makes the model unsuitable        for complex geographic analysis.
+ 4.   No interactivity: Static maps are less engaging and harder to explore for users.
+ 5.   Visual design: Basic color choices and lack of customization can reduce clarity.
+ 6.   No native support for spatial data formats: Inefficient for users dealing with professional geospatial data.
+ 7.   No time-series support: Ineffective for displaying dynamic changes over time.
+
+
+## D.    Misleading Y-Axis
+
+      Description:    Often features graphs with misleading Y-axes. For example, a bar chart where the Y-axis does not start at zero, exaggerating differences.
+
+
+Source:   Website: Garbage Graphs
+
+
+R Code Example: To demonstrate a misleading Y-axis, you might recreate a bar chart with a truncated Y-axis:
+
+```{r , echo=TRUE}
+# Load necessary libraries
+library(ggplot2)
+
+# Example dataset
+data <- data.frame(
+  category = c("A", "B", "C", "D"),
+  value = c(10, 50, 30, 40)
+)
+
+# Create a misleading bar plot
+ggplot(data, aes(x = category, y = value)) +
+  geom_bar(stat = "identity") +
+  ylim(0, 60) +  # Truncated Y-axis
+  labs(title = "Misleading Y-Axis Example",
+       x = "Category",
+       y = "Value") +
+  theme_minimal()
+```
+
+## E.    3D Pie Charts
+
+      Description:    3D pie charts that distort the proportions and make it hard to compare slices.
+
+Source:   Website: Garbage Graphs
+
+R Code Example: To demonstrate why 3D pie charts are misleading, we are using a simple 2D pie chart:
+
+```{r , echo=TRUE}
+# Load necessary libraries
+library(ggplot2)
+
+# Example dataset
+data <- data.frame(
+  category = c("A", "B", "C", "D"),
+  value = c(25, 35, 20, 20)
+)
+
+# Create a pie chart
+ggplot(data, aes(x = "", y = value, fill = category)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar(theta = "y") +
+  labs(title = "2D Pie Chart Example") +
+  theme_void()
+```

@@ -1,0 +1,98 @@
+
+---
+
+### RMarkdown Template for PCA Tutorial
+
+
+---
+title: "Understanding Principal Component Analysis"
+author: "Your Name"
+output: html_document
+---
+
+# Introduction
+
+Principal Component Analysis (PCA) is like a cool way to reduce the complexity of big datasets. Imagine you have tons of variables, and you want to make sense of them without losing too much information. PCA helps you figure out which variables matter the most.
+
+# What’s PCA All About?
+
+PCA transforms your data into a bunch of “principal components” that capture the maximum variance. It sounds fancy, but the main idea is to take high-dimensional data and represent it in fewer dimensions without losing too much information.
+
+# How Does PCA Work?
+
+Let’s break it down:
+1. **Standardize** the data (get everything on the same scale).
+2. Find the **covariance matrix** (this measures how things change together).
+3. Find **eigenvectors** and **eigenvalues** (math magic to find directions of maximum variance).
+4. **Transform** the data into new components (boom, now you have your principal components).
+
+# Doing PCA on Some Fake Data
+
+```{r}
+# Let’s create some random data
+set.seed(42)
+data <- matrix(rnorm(100*5), ncol=5)
+colnames(data) <- c("Var1", "Var2", "Var3", "Var4", "Var5")
+
+# Run PCA
+pca_result <- prcomp(data, center = TRUE, scale. = TRUE)
+
+# Check out the summary
+summary(pca_result)
+
+# Plot the first two principal components
+library(ggplot2)
+pca_df <- data.frame(pca_result$x)
+ggplot(pca_df, aes(x=PC1, y=PC2)) + 
+  geom_point() +
+  ggtitle("PCA on Random Data")
+```
+
+# Explained Variance and Scree Plot
+
+One thing you want to know is how much of the data’s variance each principal component explains. Here’s how you can figure that out.
+
+```{r}
+# Explained variance
+explained_variance <- pca_result$sdev^2 / sum(pca_result$sdev^2)
+cumulative_variance <- cumsum(explained_variance)
+
+# Scree plot
+qplot(1:length(explained_variance), explained_variance, geom="line") +
+  ggtitle("Scree Plot")
+
+# Cumulative variance plot
+qplot(1:length(cumulative_variance), cumulative_variance, geom="line") +
+  ggtitle("Cumulative Variance Plot")
+```
+
+# Real Data Example: Iris Dataset
+
+We’re going to use the famous `iris` dataset to see PCA in action. This dataset has measurements of flowers, and PCA will help us see patterns.
+
+```{r}
+# Load the iris dataset
+data(iris)
+iris_data <- iris[, -5]
+
+# Run PCA
+iris_pca <- prcomp(iris_data, center = TRUE, scale. = TRUE)
+
+# Plot the results
+iris_pca_df <- data.frame(iris_pca$x, Species = iris$Species)
+ggplot(iris_pca_df, aes(x=PC1, y=PC2, color=Species)) +
+  geom_point() +
+  ggtitle("PCA on Iris Dataset")
+```
+
+# Conclusion
+
+So that’s the gist of PCA. It’s useful when you have a lot of variables and want to reduce the dimensionality of your data. The explained variance helps you figure out how much information you're keeping with each component, and visualizing the first two components can give you some cool insights into patterns in your data.
+
+### References
+
+- James, Gareth, et al. _An Introduction to Statistical Learning_. New York: Springer, 2013.
+
+
+---
+

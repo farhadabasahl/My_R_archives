@@ -1,0 +1,371 @@
+---
+title: "DATA607: Communication in Data Science - Homework 3"
+author: "Farhad Abasahl - UID: 113959479"
+date: "2024-09-18"
+output: pdf_document
+---
+
+
+
+#   Section 3.2.4.
+
+##    3.2.4.1. In a single pipeline for each condition, find all flights that meet the condition:
+
+
+
+
+```{r }
+library(ggplot2)
+library(nycflights13)
+library(tidyverse)
+
+```
+
+```{r}
+
+#     a. Had an arrival delay of two or more hours
+
+flights |>
+  filter(arr_delay >= 120) 
+```
+```{r}
+#     b. Flew to Houston (IAH or HOU)
+
+flights |>
+filter(arr_delay >= 120,dest == "IAH" | dest == "HOU" )
+```
+
+```{r}
+#     c. Were operated by United, American, or Delta
+
+flights |>
+filter(arr_delay >= 120,dest == "IAH" | dest == "HOU" , carrier =="UA"|carrier =="AA"| carrier =="DL")
+```
+```{r}
+#     d. Departed in summer (July, August, and September)
+
+flights |>
+filter(arr_delay >= 120,dest == "IAH" | dest == "HOU" , carrier =="UA"|carrier =="AA"| carrier =="DL",month == 7 & 8 & 9)
+```
+```{r}
+#     e. Arrived more than two hours late but didn’t leave late
+
+flights |>
+filter(arr_delay >= 120,dest == "IAH" | dest == "HOU" , carrier =="UA"|carrier =="AA"| carrier =="DL",month == 7 & 8 & 9, dep_delay <= 0 , arr_delay >= 120)
+```
+
+As we can see there is NO result for a flgith with early departure and more than 2 hours delay for arrival.
+
+
+```{r}
+#     f. Were delayed by at least an hour, but made up over 30 minutes in flight
+
+flights |>
+filter(arr_delay >= 120,dest == "IAH" | dest == "HOU" , carrier =="UA"|carrier =="AA"| carrier =="DL",month == 7 & 8 & 9, dep_delay >= 60 , arr_delay <= -30 )
+
+```
+
+No plane could beat this record in our data!
+
+
+##    3.2.4.2. Sort flights to find the flights with the longest departure delays. Find the flights that left earliest in the morning.
+
+For the first part of the question, we sort the flights based on their longest departure delays;
+
+
+```{r}
+flights |>
+arrange(desc(dep_delay))
+
+```
+
+
+Here are the flights departed early in the morning sorted with the least delay.
+
+```{r}
+
+# Early in the morning with minimum delay;
+
+flights |>
+arrange(dep_time,dep_delay)
+
+```
+ 
+##    3.3.5.1.  Compare dep_time, sched_dep_time, and dep_delay. How would you expect those three numbers to be related?
+
+```{r}
+departure <- flights |> 
+  select(sched_dep_time , dep_delay, dep_time )
+departure |>
+   mutate(
+    dep_time_final = sched_dep_time + dep_delay ,
+    .keep = "all"
+  )
+```
+
+Here we can compare the the result of [sched_dep_time + dep_delay] with the dep_time. 
+We see at many occasions both are equal which makes sense but in at some other cases these two numbers do not get an equal value. 
+In those cases we see there are forty seconds difference on the either one. 
+
+
+##    3.3.5.2.  Brainstorm as many ways as possible to select dep_time, dep_delay, arr_time, and arr_delay from flights.
+```{r}
+flights |>
+select(dep_time, dep_delay, arr_time, arr_delay)
+flights |>
+select(dep_delay, dep_time, arr_time, arr_delay)
+flights |>
+select(dep_delay, arr_time , dep_time, arr_delay)
+flights |>
+select(dep_delay, arr_time , arr_delay , dep_time)
+flights |>
+select(arr_time, dep_delay, arr_delay , dep_time)
+flights |>
+select(arr_time , arr_delay ,dep_delay , dep_time)
+flights |>
+select(dep_delay , arr_time , arr_delay , dep_time)
+flights |>
+select(dep_delay , arr_delay , arr_time , dep_time)
+flights |>
+select(arr_delay, dep_delay, arr_time,  dep_time )
+```
+
+
+
+
+##    3.3.5.3.  What happens if you specify the name of the same variable multiple times in a select() call?
+
+```{r}
+flights |> 
+  select(dep_delay, dep_delay, dep_time,dep_delay, dep_time , dep_delay  )
+
+
+```
+
+It only reflects one time in the output no matter multiple times repeated in the code. 
+
+
+##    3.3.5.4.  What does the any_of() function do? Why might it be helpful in conjunction with this vector? 
+                *variables <- c("year", "month", "day", "dep_delay", "arr_delay")*
+ 
+By listing the name of selected columns as the variables the output of the any_of() provides new dataset with only selected columns.
+
+                
+```{r}
+
+variables <- c("year", "month", "day", "dep_delay", "arr_delay")
+flights |> 
+  select(any_of(variables)  )
+
+```
+
+
+#    3.3.5.6.  Rename air_time to air_time_min to indicate units of measurement and move it to the beginning of the data frame.
+
+
+```{r}
+airflights <- flights |> 
+  rename(air_time_min = air_time)
+airflights |>
+  relocate(air_time_min, .before = year)
+```
+
+#    3.5.7.1. Which carrier has the worst average delays? Challenge: can you disentangle the effects of bad airports vs. bad carriers? Why/why not? (Hint: think about flights |> group_by(carrier, dest) |> summarize(n()))
+
+```{r}
+flights |> 
+  group_by(carrier, dest) |> 
+  summarize(
+    avg_delay = mean(dep_delay, na.rm = TRUE),
+    flight_count = n()
+  ) |> 
+  arrange(desc(avg_delay))
+```
+
+It seems that UA (United Airline) has the largest average delay occuring in STL (St. Louis Lambert International Airport) comparing with other airlines and airports in 2013.
+
+#    3.5.7.2. Find the flights that are most delayed upon departure from each destination.
+
+```{r}
+flights |> 
+  group_by(origin) |> 
+  slice_max(dep_delay, n = 1) |>
+  arrange(desc(dep_delay))
+```
+
+
+
+#    3.5.7.5. Explain what count() does in terms of the dplyr verbs you just learned. What does the sort argument to count() do?
+
+Here for instance we can find number of the flights which delayed 5 or less minutes vs those delayed longer; 
+
+```{r}
+flights |>
+  count(dep_delay <= 5 , sort = TRUE)
+
+```
+  
+ or here we can find how many times flgihts has been repeated during the year 2013; 
+ 
+```{r}
+  flights |>
+  count(origin, dest, sort = TRUE)
+```
+  
+  or here we have the counts of the flights whether they delayed maximum 5 minutes or more from each carrier;
+  
+  
+```{r}
+
+flights |>
+  count( carrier, dep_delay <= 5, sort = TRUE)
+
+```
+  
+#   10.3.3.1. Explore the distribution of each of the x, y, and z variables in diamonds. What do you learn? Think about a diamond and how you might decide which dimension is the length, width, and depth.
+
+```{r}
+ggplot(diamonds, aes(x = x)) + 
+  geom_histogram(binwidth = 0.5) +
+  coord_cartesian(xlim = c(0, 10))
+ggplot(diamonds, aes(x = y)) + 
+  geom_histogram(binwidth = 0.5) +
+  coord_cartesian(ylim = c(0, 60))
+ggplot(diamonds, aes(x = z)) +
+  geom_histogram(binwidth = 0.5) +
+  coord_cartesian(ylim = c(0, 30))
+
+diamonds |> 
+  select(x,y,z) |>
+  arrange(x,y,z)
+```
+By looking to the histograms of x, y, and z first it could be realized;
+Outbonds in x-dimention are still less than 10 mm while for the y-dimension varies up to about 60 and for z up to about 30mm. 
+Once the data ordered by the x,y and z in a tibble, it turns out that the 8 beginning rows of data clearly are not valid. I think it should be convenient to assume x as the height y and z as the base coordinates.  
+
+#   10.3.3.2. Explore the distribution of price. Do you discover anything unusual or surprising? (Hint: Carefully think about the binwidth and make sure you try a wide range of values.)
+
+```{r}
+
+ggplot(diamonds, aes(x= price)) +
+  geom_histogram(binwidth = 100) +
+  coord_cartesian(ylim = c(0, 10000))
+
+ggplot(diamonds, aes(x= price)) +
+  geom_histogram(binwidth = 1000) +
+  coord_cartesian(ylim = c(0, 20000))
+  
+
+  
+```
+
+It should be pointed out that there seems to be the most available diamond gemstones values less than $5,000. 
+Trying to reduce the bandwidth results to show areas which there are no data. 
+
+
+#   10.5.1.1.2. Based on EDA, what variable in the diamonds dataset appears to be most important for predicting the price of a diamond? How is that variable correlated with cut? Why does the combination of those two relationships lead to lower quality diamonds being more expensive?
+
+carat and then cut are the most determining factors for the price. 
+
+
+```{r}
+
+# Carat and Price visualization
+
+carat_cut <- diamonds |>
+  group_by(cut) |>
+  summarize(avg_carat = mean(carat), avg_price = mean(price), .groups = 'drop')
+
+carat_cut
+```
+It looks that carat is correlated with the cut. 
+
+```{r}
+# 
+ggplot(diamonds, aes(x = carat, y = price, color = cut)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm") 
+  
+```
+To discover more about the price changing over different carats, after plotting price vs carats we see that all the existing diamonds with very high carats actually falls into the fair quality diamonds. 
+
+
+
+
+#   10.5.1.1.5. Create a visualization of diamond prices vs. a categorical variable from the diamonds dataset using geom_violin(), then a faceted geom_histogram(), then a colored geom_freqpoly(), and then a colored geom_density(). Compare and contrast the four plots. What are the pros and cons of each method of visualizing the distribution of a numerical variable based on the levels of a categorical variable?
+
+```{r}
+
+# Step 1: geom_violin() plot
+p1 <- ggplot(diamonds, aes(x = cut, y = price)) + 
+  geom_violin() +
+  ggtitle("Violin Plot: Diamond Prices by Cut") +
+  theme_minimal()
+p1
+```
+
+```{r}
+
+# Step 2: geom_histogram() with facets
+p2 <- ggplot(diamonds, aes(x = price)) + 
+  geom_histogram(binwidth = 500, fill = "blue", color = "black") +
+  facet_wrap(~cut) +
+  ggtitle("Faceted Histogram: Diamond Prices by Cut") +
+  theme_minimal()
+p2
+```
+
+```{r}
+# Step 3: Colored geom_freqpoly()
+p3 <- ggplot(diamonds, aes(x = price, color = cut)) + 
+  geom_freqpoly(binwidth = 500) +
+  ggtitle("Frequency Polygon: Diamond Prices by Cut") +
+  theme_minimal()
+p3
+```
+
+
+```{r}
+# Step 4: Colored geom_density()
+p4 <- ggplot(diamonds, aes(x = price, color = cut, fill = cut)) + 
+  geom_density(alpha = 0.3) +
+  ggtitle("Density Plot: Diamond Prices by Cut") +
+  theme_minimal()
+p4
+```
+
+
+
+Violin plots give a good overview of distribution shape and spread, though they may be harder to interpret.
+Histograms provide insight into the raw counts but can be affected by bin choice.
+Frequency polygons allow for easy comparison across groups, but they can become cluttered.
+Density plots provide a smooth, aesthetically pleasing distribution, but they may lack the granularity of actual data points or counts.
+
+
+#   10.5.3.1.2. Visualize the distribution of carat, partitioned by price.
+
+
+```{r}
+# density plot of carat, partitioned by price bins
+# create price bins using cut_width
+diamonds <- diamonds |>
+  mutate(price_bin = cut_width(price, width = 3000, boundary = 0))
+ggplot(diamonds, aes(x = carat, fill = price_bin)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribution of Carat Partitioned by Price", x = "Carat", y = "Density") +
+  theme_minimal()
+
+
+
+```
+#   10.5.3.1.5. Two dimensional plots reveal outliers that are not visible in one dimensional plots. For example, some points in the following plot have an unusual combination of x and y values, which makes the points outliers even though their x and y values appear normal when examined separately. Why is a scatterplot a better display than a binned plot for this case?
+
+```{r}
+diamonds |> 
+  filter(x >= 4) |> 
+  ggplot(aes(x = x, y = y)) + 
+  geom_point() + 
+  coord_cartesian(xlim = c(4, 11), ylim = c(4, 11))
+```  
+  
+  A scatterplot is better in this case because it preserves the granularity of the data and directly visualizes the relationship between two continuous variables, allowing for the detection of outliers that depend on specific combinations of values. Binned plots are useful for summarizing large amounts of data, but they can obscure details, including the presence of outliers, that scatterplots highlight.

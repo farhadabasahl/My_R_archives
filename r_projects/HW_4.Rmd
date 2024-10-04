@@ -1,0 +1,192 @@
+---
+title: "Analysis of Factors Predicting Heart Disease"
+subtitle: "Homework 4"
+author: |
+  Farhad Abasahl  
+  UMD: 113959479
+date: "2024-09-25"
+output:
+ 
+  html_document: 
+    toc: true
+    toc_float: true
+    
+abstract: This analysis investigates factors predicting heart disease using a logistic regression model. We explore the relationship between age, cholesterol levels, resting blood pressure, maximum heart rate, and heart disease presence. Visualizations include predicted probability trends by age and heart rate, cholesterol distribution, and sex differences in heart disease prevalence. The analysis reveals key insights into how various health metrics are associated with heart disease risk, and discusses uncertainties in the predictive model. 
+
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyverse)
+
+```
+
+We aim to predict the presence of heart disease based on several risk factors, including age, cholesterol levels, resting blood pressure, and maximum heart rate. A logistic regression model will be used for prediction, and the relationships between these predictors and heart disease will be explored through a series of multivariate visualizations.
+
+###   1. Prepare the Data
+
+First we need to read our data frame with csv format and assign data frame to the variable "heart_data".
+
+
+```{r, echo= TRUE}
+
+setwd("/Users/farhadabasahl/Documents/R/heart+disease")
+heart_data <- read.csv("processed.cleveland.data", header = FALSE)
+head(heart_data)
+
+```
+
+
+Preparing our data and making sure the data are cleaned, transformed and labeled is essential for our task. 
+After assigning meaningful names to the columns of the current data frame, we identified the cells containing the symbol "?" as placeholders for missing data. We then counted the total number of occurrences of "?" in the dataset and replaced all instances with NA to handle the missing values. Following this, we removed any rows containing NA values to ensure a clean dataset. Finally, we checked the cleaned data for integrity and saved it to a new CSV file for further analysis:
+
+
+```{r, echo=TRUE}
+colnames(heart_data) <- c("age", "sex", "cp", "trestbps", "chol", "fbs", 
+                          "restecg", "thalach", "exang", "oldpeak", "slope", 
+                          "ca", "thal", "num")
+which(heart_data == "?", arr.ind = TRUE)
+sum(heart_data == "?")
+heart_data[heart_data == "?"] <- NA
+heart_data <- as.data.frame(lapply(heart_data, 
+                                   function(x) as.numeric(as.character(x))))
+heart_data_clean <- na.omit(heart_data)
+summary(heart_data_clean)
+write.csv(heart_data_clean, "heart_data_clean.csv", row.names = FALSE)
+
+```
+
+
+
+Now let's predict the presence of heart disease (hdisease) using several features. We'll use a logistic regression model, where the target valuable (num) represets the presence of heart disease. 
+
+###   2. Visualization 1: Heart Disease by Age (age) 
+
+
+To assess the presence of heart disease, we created a binary variable indicating heart disease status (1 for presence and 0 for absence). A linear model was then fitted to predict heart disease based on various features. We provided a summary of the model's results, which allowed us to understand the significance of each predictor. Predicted probabilities of heart disease were subsequently calculated, and the results were visualized through a plot to illustrate the relationship between the predictors and the likelihood of heart disease.
+
+
+```{r, echo=TRUE}
+
+heart_data$hdisease <- ifelse(heart_data$num > 0, 1, 0)
+model <- lm(hdisease ~ age + sex + trestbps + chol + thalach,  data = heart_data)
+summary(model)
+heart_data$predicted_prob <- predict(model, type = "response")
+heart_data$hdisease <- as.factor(heart_data$hdisease)
+
+
+ggplot(heart_data, aes(x = age, y = predicted_prob)) +
+  geom_point(aes(color = hdisease), alpha = 0.9) +  
+  geom_smooth(method = "lm", color = "firebrick4", se = FALSE) + 
+  labs(title = "Predicted Probability of Heart Disease by Age",
+       x = "Age",
+       y = "Predicted Probability") +
+  scale_color_manual(values = c("black", "grey70"), labels = c(
+    "No Heart Disease", "Heart Disease")) +
+  theme_minimal()
+
+```
+
+The plot shows the predicted probability of heart disease as a function of age, with points representing individuals, color-coded by heart disease status (black for no heart disease, grey for heart disease), and a logistic regression line in firebrick4 highlighting the overall trend of increasing heart disease probability with age.
+
+
+###   3. Visualization 2: Heart Disease by Cholesterol Levels (chol)
+
+
+
+```{r}
+ggplot(heart_data, aes(x = factor(hdisease), y = chol , fill = factor(hdisease))) +
+  geom_boxplot() +
+  labs(title = "Cholesterol Levels by Heart Disease Status",
+       x = "Heart Disease (0 = No, 1 = Yes)",
+       y = "Cholesterol Level") +
+  scale_fill_manual(values = c("grey30", "grey75"), labels = c(
+    "No Heart Disease", "Heart Disease")) +
+  theme_minimal()
+```
+
+
+The boxplot shows the distribution of cholesterol levels for individuals with and without heart disease, highlighting differences in cholesterol levels between the two groups, with a darker fill representing those without heart disease and a lighter fill for those with heart disease.
+
+
+###   4. Visualization 3: Histogram and Faceting
+
+
+
+```{r}
+
+ggplot(heart_data, aes(x = chol, fill = factor(hdisease))) +
+  geom_histogram(bins = 30, alpha = 0.7, position = "identity") +
+  facet_wrap(~sex) +
+  labs(title = "Cholesterol Levels Distribution by Heart Disease Status and Sex",
+       x = "Cholesterol Level",
+       y = "Count",
+       fill = "Heart Disease Status") +
+  theme_minimal() +
+  scale_fill_manual(values = c("skyblue", "tomato3"), labels = c("No Heart Disease", "Heart Disease"))
+```
+
+
+The faceted histogram illustrates the distribution of cholesterol levels for individuals with and without heart disease, separated by sex. This visualization allows us to examine how cholesterol levels vary not only by heart disease status but also by sex. The plot suggests that both males and females with higher cholesterol levels tend to have a higher prevalence of heart disease, though the distributions differ slightly between genders.
+
+###   5. Visualization 4: Predicted Probability vs Maximum Heart Rate (thalach)
+
+
+
+```{r}
+
+ggplot(heart_data, aes(x = thalach, y = predicted_prob)) +
+  geom_point(aes(color = hdisease), alpha = 0.6) +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Predicted Probability of Heart Disease by Maximum Heart Rate",
+       x = "Maximum Heart Rate",
+       y = "Predicted Probability") +
+  scale_color_manual(values = c("olivedrab2", "black"), labels = c("No Heart Disease", 
+                                                              "Heart Disease")) +
+  theme_minimal()
+
+
+```
+
+The plot illustrates the predicted probability of heart disease based on maximum heart rate, with points color-coded by heart disease status (grey for no heart disease, darker grey for heart disease), and a smooth trend line showing how heart disease probability changes as heart rate increases.
+
+###   6. Visualization 5: Bar Plot of Sex Distribution
+
+
+```{r}
+
+ggplot(heart_data, aes(x = factor(sex), fill = factor(hdisease))) +
+  geom_bar(position = "dodge") +
+  labs(title = "Heart Disease by Gender",
+       x = "Sex (0 = Female, 1 = Male)",
+       y = "Count",
+       fill = "Heart Disease") +
+  scale_fill_manual(values = c("bisque1", "lightgoldenrod4"), labels = c(
+    "No Heart Disease - bisque1", "Heart Disease - lightgoldenrod4")) +
+  theme_minimal()
+
+
+```
+
+The bar chart compares the count of heart disease cases between males and females. It reveals that males tend to have a higher prevalence of heart disease than females, highlighting potential sex-based differences in heart disease risk.
+
+### Discussion of Uncertainty
+
+
+When predicting heart disease using a logistic regression model, uncertainty arises from several sources. One key source of uncertainty is the variability in the data. For example, while age is a strong predictor of heart disease, individual differences and other unmeasured factors can lead to variability in the predicted probabilities. The logistic model assumes a linear relationship between predictors (like age, cholesterol, and heart rate) and the outcome, but real-life data may not always follow this pattern perfectly.
+
+Additionally, there is uncertainty in the estimated coefficients of the model. For each predictor, the model calculates confidence intervals, which indicate the range within which the true effect is likely to fall. Wide confidence intervals, particularly for variables like resting blood pressure, suggest that the model is less certain about the exact effect of that predictor on heart disease risk.
+
+Lastly, the presence of missing data also contributes to uncertainty. Although we handled missing data by removing rows with incomplete values, this could lead to bias if the missing data was not random.
+
+Overall, while the model provides useful predictions, these sources of uncertainty should be considered when interpreting the results.
+
+
+
+###   Recap of Visualizations:
+
+  The analysis of heart disease risk using logistic regression highlights several important factors. Visualizations demonstrate that age, cholesterol levels, and maximum heart rate are significant predictors of heart disease risk. Specifically, as age increases, the probability of heart disease rises. Cholesterol levels also show a notable difference between individuals with and without heart disease, especially when segmented by sex. These insights suggest that both demographic (e.g., sex) and physiological (e.g., cholesterol, heart rate) factors are key to understanding heart disease risk.
+      
+
